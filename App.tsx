@@ -4,7 +4,7 @@
 */
 // Fix: Removed API key management UI and logic. The API key is now handled via environment variables.
 import React, {useCallback, useState} from 'react';
-import {CurvedArrowDownIcon} from './components/icons';
+import {CurvedArrowDownIcon, ExclamationTriangleIcon} from './components/icons';
 import LoadingIndicator from './components/LoadingIndicator';
 import PromptForm from './components/PromptForm';
 import VideoResult from './components/VideoResult';
@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const [errorDetails, setErrorDetails] = useState<{
     title: string;
     message: React.ReactNode;
+    type?: 'error' | 'warning';
   } | null>(null);
   const [lastConfig, setLastConfig] = useState<GenerateVideoParams | null>(
     null,
@@ -70,9 +71,41 @@ const App: React.FC = () => {
               .
             </>
           ),
+          type: 'error',
         });
         setAppState(AppState.ERROR);
         return; // Exit after handling specific error
+      }
+
+      if (errorMsgString.includes('The model did not generate a video')) {
+        const reasonPrefix = 'Reason: ';
+        const reasonIndex = errorMsgString.indexOf(reasonPrefix);
+
+        if (reasonIndex !== -1) {
+          const reason = errorMsgString.substring(
+            reasonIndex + reasonPrefix.length,
+          );
+          setErrorDetails({
+            title: 'Content Policy Block',
+            message: reason,
+            type: 'warning',
+          });
+        } else {
+          setErrorDetails({
+            title: 'Video Not Generated',
+            message: (
+              <>
+                <p className="mb-4">{errorMsgString}</p>
+                <p className="text-gray-400 text-sm mt-4">
+                  Please try modifying your prompt or images.
+                </p>
+              </>
+            ),
+            type: 'error',
+          });
+        }
+        setAppState(AppState.ERROR);
+        return;
       }
 
       let userFriendlyMessage = `Video generation failed: ${errorMsgString}`;
@@ -89,7 +122,11 @@ const App: React.FC = () => {
         }
       }
 
-      setErrorDetails({title: 'Error', message: userFriendlyMessage});
+      setErrorDetails({
+        title: 'Error',
+        message: userFriendlyMessage,
+        type: 'error',
+      });
       setAppState(AppState.ERROR);
     }
   }, []);
@@ -150,17 +187,56 @@ const App: React.FC = () => {
   const renderError = (details: {
     title: string;
     message: React.ReactNode;
-  }) => (
-    <div className="text-center bg-red-900/20 border border-red-500 p-8 rounded-lg max-w-2xl">
-      <h2 className="text-2xl font-bold text-red-400 mb-4">{details.title}</h2>
-      <div className="text-red-300">{details.message}</div>
-      <button
-        onClick={handleTryAgainFromError}
-        className="mt-6 px-6 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
-        Try Again
-      </button>
-    </div>
-  );
+    type?: 'error' | 'warning';
+  }) => {
+    const isWarning = details.type === 'warning';
+    const theme = {
+      container: isWarning
+        ? 'bg-yellow-900/20 border-yellow-500'
+        : 'bg-red-900/20 border-red-500',
+      titleColor: isWarning ? 'text-yellow-300' : 'text-red-400',
+      messageColor: isWarning ? 'text-yellow-200' : 'text-red-300',
+      iconContainer: isWarning ? 'bg-yellow-500/20' : 'bg-red-500/20',
+      iconColor: isWarning ? 'text-yellow-400' : 'text-red-400',
+      reasonBox: 'bg-yellow-900/30 border-yellow-600/50',
+    };
+
+    return (
+      <div
+        className={`text-center p-8 rounded-lg max-w-2xl border ${theme.container}`}>
+        {isWarning ? (
+          <div className="flex flex-col items-center">
+            <div
+              className={`flex h-16 w-16 items-center justify-center rounded-full ${theme.iconContainer} mb-6`}>
+              <ExclamationTriangleIcon
+                className={`h-10 w-10 ${theme.iconColor}`}
+                aria-hidden="true"
+              />
+            </div>
+            <h2 className={`text-2xl font-bold ${theme.titleColor} mb-4`}>
+              {details.title}
+            </h2>
+            <div
+              className={`mt-2 text-center p-4 ${theme.reasonBox} rounded-lg w-full`}>
+              <p className={theme.messageColor}>{details.message}</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h2 className={`text-2xl font-bold ${theme.titleColor} mb-4`}>
+              {details.title}
+            </h2>
+            <div className={theme.messageColor}>{details.message}</div>
+          </>
+        )}
+        <button
+          onClick={handleTryAgainFromError}
+          className="mt-6 px-6 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+          Try Again
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="h-screen bg-black text-gray-200 flex flex-col font-sans overflow-hidden">
@@ -205,6 +281,7 @@ const App: React.FC = () => {
                 title: 'Error',
                 message:
                   'Video generated, but URL is missing. Please try again.',
+                type: 'error',
               })}
             {appState === AppState.ERROR &&
               errorDetails &&

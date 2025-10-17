@@ -139,7 +139,22 @@ export const generateVideo = async (
     const videos = operation.response.generatedVideos;
 
     if (!videos || videos.length === 0) {
-      throw new Error('No videos were generated.');
+      console.error(
+        'Video generation finished but returned no videos. Full operation object:',
+        JSON.stringify(operation, null, 2),
+      );
+
+      const raiReasons = operation.response?.raiMediaFilteredReasons;
+      if (raiReasons && Array.isArray(raiReasons) && raiReasons.length > 0) {
+        const specificReason = raiReasons.join(' ');
+        throw new Error(
+          `The model did not generate a video due to safety policies. Reason: ${specificReason}`
+        );
+      }
+
+      throw new Error(
+        'The model did not generate a video, which may be due to safety filters. Please try modifying your prompt or images.',
+      );
     }
 
     const firstVideo = videos[0];
