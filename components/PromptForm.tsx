@@ -101,21 +101,28 @@ const CustomSelect: React.FC<{
 );
 
 const ImageUpload: React.FC<{
-  onSelect: (image: ImageFile) => void;
+  onSelect: (images: ImageFile[]) => void;
   onRemove?: () => void;
   image?: ImageFile | null;
   label: string;
   tooltip: string;
-}> = ({onSelect, onRemove, image, label, tooltip}) => {
+  multiple?: boolean;
+}> = ({onSelect, onRemove, image, label, tooltip, multiple = false}) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (files && files.length > 0) {
       try {
-        const imageFile = await fileToImageFile(file);
-        onSelect(imageFile);
+        // Fix: The type of 'file' was being inferred as 'unknown', causing a type error.
+        // Using a for...of loop ensures correct type inference from the FileList.
+        const imageFilePromises = [];
+        for (const file of files) {
+          imageFilePromises.push(fileToImageFile(file));
+        }
+        const imageFiles = await Promise.all(imageFilePromises);
+        onSelect(imageFiles);
       } catch (error) {
-        console.error('Error converting file:', error);
+        console.error('Error converting file(s):', error);
       }
     }
     // Reset input value to allow selecting the same file again
@@ -167,6 +174,7 @@ const ImageUpload: React.FC<{
           onChange={handleFileChange}
           accept="image/*"
           className="hidden"
+          multiple={multiple}
         />
       </button>
       <div role="tooltip" className={tooltipClasses}>
@@ -429,7 +437,9 @@ const PromptForm: React.FC<PromptFormProps> = ({
           <ImageUpload
             label="Source Image"
             image={startFrame}
-            onSelect={setStartFrame}
+            onSelect={(images) =>
+              images.length > 0 && setStartFrame(images[0])
+            }
             onRemove={() => {
               setStartFrame(null);
             }}
@@ -445,7 +455,9 @@ const PromptForm: React.FC<PromptFormProps> = ({
             <ImageUpload
               label="Start Frame"
               image={startFrame}
-              onSelect={setStartFrame}
+              onSelect={(images) =>
+                images.length > 0 && setStartFrame(images[0])
+              }
               onRemove={() => {
                 setStartFrame(null);
                 setIsLooping(false);
@@ -456,7 +468,9 @@ const PromptForm: React.FC<PromptFormProps> = ({
               <ImageUpload
                 label="End Frame"
                 image={endFrame}
-                onSelect={setEndFrame}
+                onSelect={(images) =>
+                  images.length > 0 && setEndFrame(images[0])
+                }
                 onRemove={() => setEndFrame(null)}
                 tooltip="Upload the final frame of the video."
               />
@@ -486,33 +500,65 @@ const PromptForm: React.FC<PromptFormProps> = ({
       );
     }
     if (generationMode === GenerationMode.REFERENCES_TO_VIDEO) {
+      const handleReferenceSelect = (newImages: ImageFile[]) => {
+        setReferenceImages((prevImages) => {
+          const spaceLeft = 3 - prevImages.length;
+          if (spaceLeft <= 0) {
+            return prevImages;
+          }
+          const imagesToAdd = newImages.slice(0, spaceLeft);
+          return [...prevImages, ...imagesToAdd];
+        });
+      };
+
       return (
-        <div className="mb-3 p-4 bg-[#2c2c2e] rounded-xl border border-gray-700 flex flex-wrap items-center justify-center gap-2">
-          {referenceImages.map((img, index) => (
+        <div className="mb-3 p-4 bg-[#2c2c2e] rounded-xl border border-gray-700 flex flex-col items-center justify-center gap-4">
+          <div>
+            <h3 className="text-sm font-medium text-gray-300 mb-2 text-center">
+              Reference Images ({referenceImages.length}/3)
+            </h3>
+            <div className="flex flex-wrap items-center justify-center gap-2 p-2 bg-gray-900/50 rounded-lg min-h-[6.5rem]">
+              {referenceImages.map((img, index) => (
+                <ImageUpload
+                  key={index}
+                  image={img}
+                  label=""
+                  onSelect={() => {
+                    /* no-op */
+                  }}
+                  onRemove={() =>
+                    setReferenceImages((imgs) =>
+                      imgs.filter((_, i) => i !== index),
+                    )
+                  }
+                  tooltip=""
+                />
+              ))}
+              {referenceImages.length < 3 && (
+                <ImageUpload
+                  label="Add Reference"
+                  onSelect={handleReferenceSelect}
+                  tooltip="Upload reference images (up to 3). You can select multiple files at once."
+                  multiple={true}
+                />
+              )}
+            </div>
+          </div>
+          <div className="w-full max-w-sm border-t border-gray-700 my-2"></div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-300 mb-2 text-center">
+              Style Image (optional)
+            </h3>
             <ImageUpload
-              key={index}
-              image={img}
-              label=""
-              onSelect={() => {}}
-              onRemove={() =>
-                setReferenceImages((imgs) => imgs.filter((_, i) => i !== index))
+              label="Style Image"
+              image={styleImage}
+              onSelect={(images) =>
+                images.length > 0 && setStyleImage(images[0])
               }
-              tooltip="" // No tooltip needed for existing images
+              onRemove={() => setStyleImage(null)}
+              tooltip="Upload an image to influence the artistic style of the video."
             />
-          ))}
-          {referenceImages.length < 3 && (
-            <ImageUpload
-              label="Add Reference"
-              onSelect={(img) => setReferenceImages((imgs) => [...imgs, img])}
-              tooltip="Upload a reference image (up to 3) for character or style."
-            />
-          )}
-          {/* <ImageUpload
-            label="Style Image"
-            image={styleImage}
-            onSelect={setStyleImage}
-            onRemove={() => setStyleImage(null)}
-          /> */}
+          </div>
         </div>
       );
     }
@@ -624,11 +670,6 @@ const PromptForm: React.FC<PromptFormProps> = ({
                 <option value={Resolution.P720}>720p</option>
                 <option value={Resolution.P1080}>1080p</option>
               </CustomSelect>
-              {resolution === Resolution.P1080 && (
-                <p className="text-xs text-yellow-400/80 mt-2">
-                  1080p videos can't be extended.
-                </p>
-              )}
               <div role="tooltip" className={tooltipTopCenterClasses}>
                 Select the video's resolution. 1080p offers higher quality.
               </div>
@@ -744,8 +785,8 @@ const PromptForm: React.FC<PromptFormProps> = ({
           </div>
         </div>
         <p className="text-xs text-gray-500 text-center mt-2 px-4">
-          Veo is a paid-only model. You will be charged on your Cloud project.
-          See{' '}
+          Video generation is a paid-only feature. You will be charged on your
+          Cloud project. See{' '}
           <a
             href="https://ai.google.dev/gemini-api/docs/pricing#veo-3"
             target="_blank"

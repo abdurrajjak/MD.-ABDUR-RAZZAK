@@ -7,21 +7,21 @@
 @keyframes subtle-float {
   0% {
     transform: translateY(0px) rotateX(0deg);
-    text-shadow: 0px 1px 0 #c026d3, 0px 2px 0 #9333ea, 0px 3px 0 #7e22ce, 0 8px 6px rgba(0, 0, 0, 0.2);
+    text-shadow: 0px 1px 0 #b91c1c, 0px 2px 0 #991b1b, 0px 3px 0 #7f1d1d, 0 8px 6px rgba(0, 0, 0, 0.2);
   }
   50% {
     transform: translateY(-5px) rotateX(5deg);
-    text-shadow: 0px 1px 0 #c026d3, 0px 2px 0 #9333ea, 0px 3px 0 #7e22ce, 0 12px 10px rgba(0, 0, 0, 0.3);
+    text-shadow: 0px 1px 0 #b91c1c, 0px 2px 0 #991b1b, 0px 3px 0 #7f1d1d, 0 12px 10px rgba(0, 0, 0, 0.3);
   }
   100% {
     transform: translateY(0px) rotateX(0deg);
-    text-shadow: 0px 1px 0 #c026d3, 0px 2px 0 #9333ea, 0px 3px 0 #7e22ce, 0 8px 6px rgba(0, 0, 0, 0.2);
+    text-shadow: 0px 1px 0 #b91c1c, 0px 2px 0 #991b1b, 0px 3px 0 #7f1d1d, 0 8px 6px rgba(0, 0, 0, 0.2);
   }
 }
 
 
 .animated-title {
-  font-weight: 800; /* Extra bold for depth */
+  font-weight: 400; /* Normal weight */
   /* Gradient using red/pink to purple shades */
   background: linear-gradient(to right, #f43f5e, #be185d, #a855f7, #9333ea);
   background-size: 200% auto;
@@ -29,6 +29,17 @@
   background-clip: text;
   color: transparent;
   animation: gradient-flow 6s ease-in-out infinite, subtle-float 8s ease-in-out infinite;
+  transform-style: preserve-3d;
+  perspective: 500px;
+}
+
+.animated-main-title {
+  background: linear-gradient(to right, #f87171, #ef4444, #dc2626); /* Red gradient */
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-flow 4s ease-in-out infinite, subtle-float 8s ease-in-out infinite;
   transform-style: preserve-3d;
   perspective: 500px;
 }

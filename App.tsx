@@ -264,28 +264,29 @@ const App: React.FC = () => {
       {/* Main App Content */}
       <div className="flex-1 flex flex-col max-w-4xl min-w-0 h-full">
         <header className="py-6 flex justify-center items-center px-8 relative z-10 flex-shrink-0">
-          <h1 className="text-5xl font-semibold tracking-wide text-center bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            Veo Studio
+          <h1 className="text-7xl font-bold tracking-wide text-center animated-main-title">
+            free Ai Studio
           </h1>
         </header>
         <main className="w-full flex-grow flex flex-col overflow-y-auto">
           {appState === AppState.IDLE ? (
-            <>
-              <div className="flex-grow flex items-center justify-center">
-                <div className="relative text-center">
-                  <h2 className="text-4xl sm:text-5xl animated-title">
-                    Type in the prompt box to start
-                  </h2>
-                  <CurvedArrowDownIcon className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-24 h-24 text-gray-700 opacity-60" />
-                </div>
+            <div className="flex-grow flex flex-col items-center justify-center w-full p-4">
+              <div className="text-center mb-4">
+                <p className="text-2xl text-gray-300 animated-title">
+                  Type in the prompt box to start
+                </p>
+                <CurvedArrowDownIcon className="w-12 h-12 mx-auto mt-2 text-red-600" />
               </div>
-              <div className="pb-4 w-full">
+              <div className="w-full">
                 <PromptForm
                   onGenerate={handleGenerate}
                   initialValues={initialFormValues}
                 />
               </div>
-            </>
+              <div className="mt-8 w-full h-24 flex items-center justify-center bg-gray-900/50 border border-gray-700 rounded-lg text-gray-500">
+                <span>Google Ad</span>
+              </div>
+            </div>
           ) : (
             <div className="flex-grow flex items-center justify-center w-full">
               {appState === AppState.LOADING && <LoadingIndicator />}

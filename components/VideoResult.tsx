@@ -23,7 +23,7 @@ const VideoResult: React.FC<VideoResultProps> = ({
       <h2 className="text-2xl font-bold text-gray-200">
         Your Creation is Ready!
       </h2>
-      <div className="w-full max-w-2xl aspect-video rounded-lg overflow-hidden bg-black shadow-lg">
+      <div className="w-full max-w-4xl aspect-video rounded-lg overflow-hidden bg-black shadow-lg">
         <video
           src={videoUrl}
           controls
