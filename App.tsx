@@ -255,56 +255,68 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-black text-gray-200 flex flex-col font-sans overflow-hidden">
-      {/* Fix: Removed ApiKeyDialog as API key is handled by environment variables. */}
-      <header className="py-6 flex justify-center items-center px-8 relative z-10">
-        <h1 className="text-5xl font-semibold tracking-wide text-center bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-          Veo Studio
-        </h1>
-      </header>
-      <main className="w-full max-w-4xl mx-auto flex-grow flex flex-col p-4">
-        {appState === AppState.IDLE ? (
-          <>
-            <div className="flex-grow flex items-center justify-center">
-              <div className="relative text-center">
-                <h2 className="text-4xl sm:text-5xl animated-title">
-                  Type in the prompt box to start
-                </h2>
-                <CurvedArrowDownIcon className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-24 h-24 text-gray-700 opacity-60" />
+    <div className="h-screen bg-black text-gray-200 font-sans flex justify-center p-4 gap-4 overflow-hidden">
+      {/* Left Ad Placeholder */}
+      <aside className="hidden lg:flex flex-col items-center justify-center w-40 flex-shrink-0 bg-gray-900/50 border border-gray-700 rounded-lg text-gray-500">
+        <span>Google Ad</span>
+      </aside>
+
+      {/* Main App Content */}
+      <div className="flex-1 flex flex-col max-w-4xl min-w-0 h-full">
+        <header className="py-6 flex justify-center items-center px-8 relative z-10 flex-shrink-0">
+          <h1 className="text-5xl font-semibold tracking-wide text-center bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            Veo Studio
+          </h1>
+        </header>
+        <main className="w-full flex-grow flex flex-col overflow-y-auto">
+          {appState === AppState.IDLE ? (
+            <>
+              <div className="flex-grow flex items-center justify-center">
+                <div className="relative text-center">
+                  <h2 className="text-4xl sm:text-5xl animated-title">
+                    Type in the prompt box to start
+                  </h2>
+                  <CurvedArrowDownIcon className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-24 h-24 text-gray-700 opacity-60" />
+                </div>
               </div>
+              <div className="pb-4 w-full">
+                <PromptForm
+                  onGenerate={handleGenerate}
+                  initialValues={initialFormValues}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="flex-grow flex items-center justify-center w-full">
+              {appState === AppState.LOADING && <LoadingIndicator />}
+              {appState === AppState.SUCCESS && videoUrl && (
+                <VideoResult
+                  videoUrl={videoUrl}
+                  onRetry={handleRetry}
+                  onNewVideo={handleNewVideo}
+                  // onExtend={handleExtend}
+                />
+              )}
+              {appState === AppState.SUCCESS &&
+                !videoUrl &&
+                renderError({
+                  title: 'Error',
+                  message:
+                    'Video generated, but URL is missing. Please try again.',
+                  type: 'error',
+                })}
+              {appState === AppState.ERROR &&
+                errorDetails &&
+                renderError(errorDetails)}
             </div>
-            <div className="pb-4">
-              <PromptForm
-                onGenerate={handleGenerate}
-                initialValues={initialFormValues}
-              />
-            </div>
-          </>
-        ) : (
-          <div className="flex-grow flex items-center justify-center">
-            {appState === AppState.LOADING && <LoadingIndicator />}
-            {appState === AppState.SUCCESS && videoUrl && (
-              <VideoResult
-                videoUrl={videoUrl}
-                onRetry={handleRetry}
-                onNewVideo={handleNewVideo}
-                // onExtend={handleExtend}
-              />
-            )}
-            {appState === AppState.SUCCESS &&
-              !videoUrl &&
-              renderError({
-                title: 'Error',
-                message:
-                  'Video generated, but URL is missing. Please try again.',
-                type: 'error',
-              })}
-            {appState === AppState.ERROR &&
-              errorDetails &&
-              renderError(errorDetails)}
-          </div>
-        )}
-      </main>
+          )}
+        </main>
+      </div>
+      
+      {/* Right Ad Placeholder */}
+      <aside className="hidden lg:flex flex-col items-center justify-center w-40 flex-shrink-0 bg-gray-900/50 border border-gray-700 rounded-lg text-gray-500">
+        <span>Google Ad</span>
+      </aside>
     </div>
   );
 };
