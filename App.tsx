@@ -14,6 +14,35 @@ import {
   GenerateVideoParams,
 } from './types';
 
+const Marquee: React.FC = () => {
+  const items = [
+    "Text to Video",
+    "Image to Video",
+    "Frames to Video",
+    "References to Video",
+  ];
+
+  const MarqueeContent = () => (
+    <>
+      {items.map((text, index) => (
+        <React.Fragment key={index}>
+          <span className="marquee-item">{text}</span>
+          <span className="text-red-500 mx-4">✦</span>
+        </React.Fragment>
+      ))}
+    </>
+  );
+
+  return (
+    <div className="marquee-container">
+      <div className="marquee-content">
+        <MarqueeContent />
+        <MarqueeContent />
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -263,10 +292,12 @@ const App: React.FC = () => {
 
       {/* Main App Content */}
       <div className="flex-1 flex flex-col max-w-4xl min-w-0 h-full">
-        <header className="py-6 flex justify-center items-center px-8 relative z-10 flex-shrink-0">
-          <h1 className="text-7xl font-bold tracking-wide text-center animated-main-title">
+        <header className="py-4 text-center px-8 relative z-10 flex-shrink-0">
+          <h1 className="text-7xl font-bold tracking-wide animated-main-title">
             free Ai Studio
           </h1>
+          <hr className="title-underline" />
+          <Marquee />
         </header>
         <main className="w-full flex-grow flex flex-col overflow-y-auto">
           {appState === AppState.IDLE ? (

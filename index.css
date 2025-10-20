@@ -91,3 +91,36 @@
 .animate-fade-in-out {
   animation: fade-in-out 3s ease-in-out 1;
 }
+
+/* Marquee Styles */
+@keyframes marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.title-underline {
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(to right, #f87171, #ef4444, #dc2626);
+  margin: 16px auto 8px;
+  border: none;
+}
+
+.marquee-container {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.marquee-content {
+  display: flex;
+  width: fit-content;
+  animation: marquee-scroll 20s linear infinite;
+}
+
+.marquee-item {
+  font-size: 1rem;
+  color: #d1d5db; /* text-gray-300 */
+  padding: 0 1rem;
+}
