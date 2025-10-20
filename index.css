@@ -32,3 +32,51 @@
   transform-style: preserve-3d;
   perspective: 500px;
 }
+
+.range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  margin-top: -8px; /* Centers thumb on the track */
+  background-color: #818cf8; /* indigo-400 */
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  border: 2px solid #2c2c2e; /* Matching settings panel bg */
+  cursor: pointer;
+}
+
+.range-thumb::-moz-range-thumb {
+  background-color: #818cf8;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  border: 2px solid #2c2c2e;
+  cursor: pointer;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes fade-in-out {
+  0%, 100% { opacity: 0; }
+  10%, 90% { opacity: 1; }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2.5s linear infinite;
+}
+
+.animate-spin-reverse {
+  animation: spin-reverse 1.8s linear infinite;
+}
+
+.animate-fade-in-out {
+  animation: fade-in-out 3s ease-in-out 1;
+}

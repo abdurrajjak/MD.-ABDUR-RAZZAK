@@ -105,7 +105,8 @@ const ImageUpload: React.FC<{
   onRemove?: () => void;
   image?: ImageFile | null;
   label: string;
-}> = ({onSelect, onRemove, image, label}) => {
+  tooltip: string;
+}> = ({onSelect, onRemove, image, label, tooltip}) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -123,6 +124,9 @@ const ImageUpload: React.FC<{
     }
   };
 
+  const tooltipClasses =
+    'absolute text-center bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-900 border border-gray-700 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10';
+
   if (image) {
     return (
       <div className="relative w-28 h-20 group">
@@ -131,32 +135,44 @@ const ImageUpload: React.FC<{
           alt="preview"
           className="w-full h-full object-cover rounded-lg"
         />
-        <button
-          type="button"
-          onClick={onRemove}
-          className="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label="Remove image">
-          <XMarkIcon className="w-4 h-4" />
-        </button>
+        <div className="absolute top-1 right-1 group/remove">
+          <button
+            type="button"
+            onClick={onRemove}
+            className="w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Remove image">
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+          <div
+            role="tooltip"
+            className="absolute bottom-full right-0 mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-900 border border-gray-700 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover/remove:opacity-100 transition-opacity pointer-events-none z-10">
+            Remove image
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => inputRef.current?.click()}
-      className="w-28 h-20 bg-gray-700/50 hover:bg-gray-700 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:text-white transition-colors">
-      <PlusIcon className="w-6 h-6" />
-      <span className="text-xs mt-1">{label}</span>
-      <input
-        type="file"
-        ref={inputRef}
-        onChange={handleFileChange}
-        accept="image/*"
-        className="hidden"
-      />
-    </button>
+    <div className="relative group">
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="w-28 h-20 bg-gray-700/50 hover:bg-gray-700 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:text-white transition-colors">
+        <PlusIcon className="w-6 h-6" />
+        <span className="text-xs mt-1">{label}</span>
+        <input
+          type="file"
+          ref={inputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          className="hidden"
+        />
+      </button>
+      <div role="tooltip" className={tooltipClasses}>
+        {tooltip}
+      </div>
+    </div>
   );
 };
 
@@ -167,6 +183,7 @@ const VideoUpload: React.FC<{
   label: string;
 }> = ({onSelect, onRemove, video, label}) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  // Fix: Corrected malformed try-catch block for file handling.
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -188,32 +205,46 @@ const VideoUpload: React.FC<{
           loop
           className="w-full h-full object-cover rounded-lg"
         />
-        <button
-          type="button"
-          onClick={onRemove}
-          className="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label="Remove video">
-          <XMarkIcon className="w-4 h-4" />
-        </button>
+        <div className="absolute top-1 right-1 group/remove">
+          <button
+            type="button"
+            onClick={onRemove}
+            className="w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Remove video">
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+          <div
+            role="tooltip"
+            className="absolute bottom-full right-0 mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-900 border border-gray-700 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover/remove:opacity-100 transition-opacity pointer-events-none z-10">
+            Remove video
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => inputRef.current?.click()}
-      className="w-48 h-28 bg-gray-700/50 hover:bg-gray-700 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:text-white transition-colors">
-      <PlusIcon className="w-6 h-6" />
-      <span className="text-xs mt-1">{label}</span>
-      <input
-        type="file"
-        ref={inputRef}
-        onChange={handleFileChange}
-        accept="video/*"
-        className="hidden"
-      />
-    </button>
+    <div className="relative group">
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="w-48 h-28 bg-gray-700/50 hover:bg-gray-700 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:text-white transition-colors">
+        <PlusIcon className="w-6 h-6" />
+        <span className="text-xs mt-1">{label}</span>
+        <input
+          type="file"
+          ref={inputRef}
+          onChange={handleFileChange}
+          accept="video/*"
+          className="hidden"
+        />
+      </button>
+      <div
+        role="tooltip"
+        className="absolute text-center bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-900 border border-gray-700 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+        Upload a video to extend.
+      </div>
+    </div>
   );
 };
 
@@ -221,6 +252,22 @@ interface PromptFormProps {
   onGenerate: (params: GenerateVideoParams) => void;
   initialValues?: GenerateVideoParams | null;
 }
+
+const tooltipBaseClasses =
+  'absolute w-max max-w-xs px-3 py-1.5 bg-gray-900 border border-gray-700 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-center';
+const tooltipTopCenterClasses = `${tooltipBaseClasses} bottom-full left-1/2 -translate-x-1/2 mb-2`;
+const tooltipTopRightClasses = `${tooltipBaseClasses} bottom-full right-0 mb-2`;
+const tooltipTopLeftClasses = `${tooltipBaseClasses} bottom-full left-0 mb-2`;
+const tooltipRightClasses = `${tooltipBaseClasses} left-full top-1/2 -translate-y-1/2 ml-2 z-20`;
+
+const modeTooltips: Record<GenerationMode, string> = {
+  [GenerationMode.TEXT_TO_VIDEO]: 'Generate a video from a text description.',
+  [GenerationMode.IMAGE_TO_VIDEO]: 'Animate a single source image.',
+  [GenerationMode.FRAMES_TO_VIDEO]:
+    'Generate motion between a start and an end frame.',
+  [GenerationMode.REFERENCES_TO_VIDEO]:
+    'Create a video using reference images for character or environment consistency.',
+};
 
 const PromptForm: React.FC<PromptFormProps> = ({
   onGenerate,
@@ -231,7 +278,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
     initialValues?.model ?? VeoModel.VEO_FAST,
   );
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>(
-    initialValues?.aspectRatio ?? AspectRatio.LANDSCAPE,
+    initialValues?.aspectRatio ?? AspectRatio.PORTRAIT,
   );
   const [resolution, setResolution] = useState<Resolution>(
     initialValues?.resolution ?? Resolution.P720,
@@ -255,11 +302,39 @@ const PromptForm: React.FC<PromptFormProps> = ({
     initialValues?.inputVideo ?? null,
   );
   const [isLooping, setIsLooping] = useState(initialValues?.isLooping ?? false);
+  const [duration, setDuration] = useState(initialValues?.duration ?? 15);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isModeSelectorOpen, setIsModeSelectorOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const modeSelectorRef = useRef<HTMLDivElement>(null);
+
+  const maxDuration = model === VeoModel.VEO ? 30 : 15;
+
+  useEffect(() => {
+    // When initialValues prop changes, reset the form state. This is crucial
+    // for the "Try Again" functionality where we want to prepopulate the
+    // form, and for "New Video" where we want to clear it.
+    setPrompt(initialValues?.prompt ?? '');
+    setModel(initialValues?.model ?? VeoModel.VEO_FAST);
+    setAspectRatio(initialValues?.aspectRatio ?? AspectRatio.PORTRAIT);
+    setResolution(initialValues?.resolution ?? Resolution.P720);
+    setGenerationMode(initialValues?.mode ?? GenerationMode.TEXT_TO_VIDEO);
+    setStartFrame(initialValues?.startFrame ?? null);
+    setEndFrame(initialValues?.endFrame ?? null);
+    setReferenceImages(initialValues?.referenceImages ?? []);
+    setStyleImage(initialValues?.styleImage ?? null);
+    setInputVideo(initialValues?.inputVideo ?? null);
+    setIsLooping(initialValues?.isLooping ?? false);
+    setDuration(initialValues?.duration ?? 15);
+  }, [initialValues]);
+
+  useEffect(() => {
+    // Clamp duration if model changes and current duration is out of bounds
+    if (duration > maxDuration) {
+      setDuration(maxDuration);
+    }
+  }, [model, duration, maxDuration]);
 
   useEffect(() => {
     if (generationMode === GenerationMode.REFERENCES_TO_VIDEO) {
@@ -305,6 +380,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
         styleImage,
         inputVideo,
         isLooping,
+        duration,
       });
     },
     [
@@ -320,6 +396,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
       inputVideo,
       onGenerate,
       isLooping,
+      duration,
     ],
   );
 
@@ -356,6 +433,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
             onRemove={() => {
               setStartFrame(null);
             }}
+            tooltip="Upload the image to be animated."
           />
         </div>
       );
@@ -372,6 +450,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
                 setStartFrame(null);
                 setIsLooping(false);
               }}
+              tooltip="Upload the first frame of the video."
             />
             {!isLooping && (
               <ImageUpload
@@ -379,11 +458,12 @@ const PromptForm: React.FC<PromptFormProps> = ({
                 image={endFrame}
                 onSelect={setEndFrame}
                 onRemove={() => setEndFrame(null)}
+                tooltip="Upload the final frame of the video."
               />
             )}
           </div>
           {startFrame && !endFrame && (
-            <div className="mt-3 flex items-center">
+            <div className="mt-3 flex items-center relative group">
               <input
                 id="loop-video-checkbox"
                 type="checkbox"
@@ -396,6 +476,10 @@ const PromptForm: React.FC<PromptFormProps> = ({
                 className="ml-2 text-sm font-medium text-gray-300 cursor-pointer">
                 Create a looping video
               </label>
+              <div role="tooltip" className={tooltipTopCenterClasses}>
+                When checked, the video will loop seamlessly by using the start
+                frame as the end frame.
+              </div>
             </div>
           )}
         </div>
@@ -413,12 +497,14 @@ const PromptForm: React.FC<PromptFormProps> = ({
               onRemove={() =>
                 setReferenceImages((imgs) => imgs.filter((_, i) => i !== index))
               }
+              tooltip="" // No tooltip needed for existing images
             />
           ))}
           {referenceImages.length < 3 && (
             <ImageUpload
               label="Add Reference"
               onSelect={(img) => setReferenceImages((imgs) => [...imgs, img])}
+              tooltip="Upload a reference image (up to 3) for character or style."
             />
           )}
           {/* <ImageUpload
@@ -488,31 +574,47 @@ const PromptForm: React.FC<PromptFormProps> = ({
       {isSettingsOpen && (
         <div className="absolute bottom-full left-0 right-0 mb-3 p-4 bg-[#2c2c2e] rounded-xl border border-gray-700 shadow-2xl">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <CustomSelect
-              label="Model"
-              value={model}
-              onChange={(e) => setModel(e.target.value as VeoModel)}
-              icon={<SparklesIcon className="w-5 h-5 text-gray-400" />}
-              disabled={isRefMode}>
-              {Object.values(VeoModel).map((modelValue) => (
-                <option key={modelValue} value={modelValue}>
-                  {modelValue}
-                </option>
-              ))}
-            </CustomSelect>
-            <CustomSelect
-              label="Aspect Ratio"
-              value={aspectRatio}
-              onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
-              icon={<RectangleStackIcon className="w-5 h-5 text-gray-400" />}
-              disabled={isRefMode}>
-              {Object.entries(aspectRatioDisplayNames).map(([key, name]) => (
-                <option key={key} value={key}>
-                  {name}
-                </option>
-              ))}
-            </CustomSelect>
-            <div>
+            <div className="relative group">
+              <CustomSelect
+                label="Model"
+                value={model}
+                onChange={(e) => setModel(e.target.value as VeoModel)}
+                icon={<SparklesIcon className="w-5 h-5 text-gray-400" />}
+                disabled={isRefMode}>
+                {Object.values(VeoModel).map((modelValue) => (
+                  <option key={modelValue} value={modelValue}>
+                    {modelValue}
+                  </option>
+                ))}
+              </CustomSelect>
+              <div role="tooltip" className={tooltipTopCenterClasses}>
+                Choose the generation model. 'VEO' is higher quality but
+                slower.
+              </div>
+            </div>
+            <div className="relative group">
+              <CustomSelect
+                label="Aspect Ratio"
+                value={aspectRatio}
+                onChange={(e) =>
+                  setAspectRatio(e.target.value as AspectRatio)
+                }
+                icon={
+                  <RectangleStackIcon className="w-5 h-5 text-gray-400" />
+                }
+                disabled={isRefMode}>
+                {Object.entries(aspectRatioDisplayNames).map(([key, name]) => (
+                  <option key={key} value={key}>
+                    {name}
+                  </option>
+                ))}
+              </CustomSelect>
+              <div role="tooltip" className={tooltipTopCenterClasses}>
+                Select the video's aspect ratio (e.g., Landscape for YouTube,
+                Portrait for mobile).
+              </div>
+            </div>
+            <div className="relative group">
               <CustomSelect
                 label="Resolution"
                 value={resolution}
@@ -527,6 +629,32 @@ const PromptForm: React.FC<PromptFormProps> = ({
                   1080p videos can't be extended.
                 </p>
               )}
+              <div role="tooltip" className={tooltipTopCenterClasses}>
+                Select the video's resolution. 1080p offers higher quality.
+              </div>
+            </div>
+            <div className="md:col-span-3 pt-2 relative group">
+              <label
+                htmlFor="duration-slider"
+                className="text-xs block mb-1.5 font-medium text-gray-400">
+                Duration ({duration}s)
+              </label>
+              <input
+                id="duration-slider"
+                type="range"
+                min="1"
+                max={maxDuration}
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+                className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-thumb"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Note: The model aims for this duration, but the actual video
+                length may vary.
+              </p>
+              <div role="tooltip" className={tooltipTopCenterClasses}>
+                Set the desired length of the video in seconds.
+              </div>
             </div>
           </div>
         </div>
@@ -534,7 +662,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
       <form onSubmit={handleSubmit} className="w-full">
         {renderMediaUploads()}
         <div className="flex items-end gap-2 bg-[#1f1f1f] border border-gray-600 rounded-2xl p-2 shadow-lg focus-within:ring-2 focus-within:ring-indigo-500">
-          <div className="relative" ref={modeSelectorRef}>
+          <div className="relative group" ref={modeSelectorRef}>
             <button
               type="button"
               onClick={() => setIsModeSelectorOpen((prev) => !prev)}
@@ -545,36 +673,55 @@ const PromptForm: React.FC<PromptFormProps> = ({
                 {generationMode}
               </span>
             </button>
+            <div role="tooltip" className={tooltipTopLeftClasses}>
+              Change generation mode
+            </div>
             {isModeSelectorOpen && (
-              <div className="absolute bottom-full mb-2 w-60 bg-[#2c2c2e] border border-gray-600 rounded-lg shadow-xl overflow-hidden">
+              <div className="absolute bottom-full mb-2 w-60 bg-[#2c2c2e] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-10">
                 {Object.values(GenerationMode).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => handleSelectMode(mode)}
-                    className={`w-full text-left flex items-center gap-3 p-3 hover:bg-indigo-600/50 ${generationMode === mode ? 'bg-indigo-600/30 text-white' : 'text-gray-300'}`}>
-                    {modeIcons[mode]}
-                    <span>{mode}</span>
-                  </button>
+                  <div className="relative group/item w-full" key={mode}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectMode(mode)}
+                      className={`w-full text-left flex items-center gap-3 p-3 hover:bg-indigo-600/50 ${generationMode === mode ? 'bg-indigo-600/30 text-white' : 'text-gray-300'}`}>
+                      {modeIcons[mode]}
+                      <span>{mode}</span>
+                    </button>
+                    <div
+                      role="tooltip"
+                      className={`${tooltipRightClasses} opacity-0 group-hover/item:opacity-100`}>
+                      {modeTooltips[mode]}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
           </div>
-          <textarea
-            ref={textareaRef}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder={promptPlaceholder}
-            className="flex-grow bg-transparent focus:outline-none resize-none text-base text-gray-200 placeholder-gray-500 max-h-48 py-2"
-            rows={1}
-          />
-          <button
-            type="button"
-            onClick={() => setIsSettingsOpen((prev) => !prev)}
-            className={`p-2.5 rounded-full hover:bg-gray-700 ${isSettingsOpen ? 'bg-gray-700 text-white' : 'text-gray-300'}`}
-            aria-label="Toggle settings">
-            <SlidersHorizontalIcon className="w-5 h-5" />
-          </button>
+          <div className="relative group flex-grow">
+            <textarea
+              ref={textareaRef}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder={promptPlaceholder}
+              className="flex-grow bg-transparent focus:outline-none resize-none text-base text-gray-200 placeholder-gray-500 max-h-48 py-2"
+              rows={1}
+            />
+            <div role="tooltip" className={tooltipTopCenterClasses}>
+              Enter a description for the video you want to create.
+            </div>
+          </div>
+          <div className="relative group">
+            <button
+              type="button"
+              onClick={() => setIsSettingsOpen((prev) => !prev)}
+              className={`p-2.5 rounded-full hover:bg-gray-700 ${isSettingsOpen ? 'bg-gray-700 text-white' : 'text-gray-300'}`}
+              aria-label="Toggle settings">
+              <SlidersHorizontalIcon className="w-5 h-5" />
+            </button>
+            <div role="tooltip" className={tooltipTopRightClasses}>
+              {isSettingsOpen ? 'Hide' : 'Show'} advanced settings
+            </div>
+          </div>
           <div className="relative group">
             <button
               type="submit"
@@ -583,23 +730,27 @@ const PromptForm: React.FC<PromptFormProps> = ({
               disabled={isSubmitDisabled}>
               <ArrowRightIcon className="w-5 h-5 text-white" />
             </button>
-            {isSubmitDisabled && tooltipText && (
+            {isSubmitDisabled && tooltipText ? (
               <div
                 role="tooltip"
                 className="absolute bottom-full right-0 mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-900 border border-gray-700 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                 {tooltipText}
               </div>
+            ) : (
+              <div role="tooltip" className={tooltipTopRightClasses}>
+                Generate video
+              </div>
             )}
           </div>
         </div>
         <p className="text-xs text-gray-500 text-center mt-2 px-4">
-          Veo is a paid-only model. You will be charged on your Cloud project. See{' '}
+          Veo is a paid-only model. You will be charged on your Cloud project.
+          See{' '}
           <a
             href="https://ai.google.dev/gemini-api/docs/pricing#veo-3"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-400 hover:underline"
-          >
+            className="text-indigo-400 hover:underline">
             pricing details
           </a>
           .

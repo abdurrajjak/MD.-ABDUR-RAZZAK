@@ -28,12 +28,14 @@ const App: React.FC = () => {
   // A single state to hold the initial values for the prompt form
   const [initialFormValues, setInitialFormValues] =
     useState<GenerateVideoParams | null>(null);
+  const [clearImagesOnTryAgain, setClearImagesOnTryAgain] = useState(false);
 
   // Fix: Removed API key check logic.
   const handleGenerate = useCallback(async (params: GenerateVideoParams) => {
     setAppState(AppState.LOADING);
     setErrorDetails(null);
     setLastConfig(params);
+    setClearImagesOnTryAgain(false);
     // Reset initial form values for the next fresh start
     setInitialFormValues(null);
 
@@ -80,6 +82,7 @@ const App: React.FC = () => {
       if (errorMsgString.includes('The model did not generate a video')) {
         const reasonPrefix = 'Reason: ';
         const reasonIndex = errorMsgString.indexOf(reasonPrefix);
+        setClearImagesOnTryAgain(true); // Always clear images for safety-related failures.
 
         if (reasonIndex !== -1) {
           const reason = errorMsgString.substring(
@@ -147,14 +150,27 @@ const App: React.FC = () => {
 
   const handleTryAgainFromError = useCallback(() => {
     if (lastConfig) {
-      setInitialFormValues(lastConfig);
+      if (clearImagesOnTryAgain) {
+        // Clear images for the next attempt as per policy violation guidance
+        const newConfig = {
+          ...lastConfig,
+          startFrame: null,
+          endFrame: null,
+          referenceImages: [],
+          styleImage: null,
+          inputVideo: null,
+        };
+        setInitialFormValues(newConfig);
+      } else {
+        setInitialFormValues(lastConfig);
+      }
       setAppState(AppState.IDLE);
       setErrorDetails(null);
     } else {
       // Fallback to a fresh start if there's no last config
       handleNewVideo();
     }
-  }, [lastConfig, handleNewVideo]);
+  }, [lastConfig, handleNewVideo, clearImagesOnTryAgain]);
 
   /* const handleExtend = useCallback(async () => {
     if (lastConfig && lastVideoBlob) {

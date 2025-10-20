@@ -54,4 +54,5 @@ export interface GenerateVideoParams {
   styleImage?: ImageFile | null;
   inputVideo?: VideoFile | null;
   isLooping?: boolean;
+  duration?: number;
 }

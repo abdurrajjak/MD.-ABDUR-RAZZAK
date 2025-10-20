@@ -4,6 +4,7 @@
 */
 
 import React, { useState, useEffect } from 'react';
+import { SparklesIcon } from './icons';
 
 const loadingMessages = [
   "Warming up the digital director...",
@@ -40,10 +41,20 @@ const LoadingIndicator: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center p-12 bg-gray-800/50 rounded-lg border border-gray-700">
-      <div className="w-16 h-16 border-4 border-t-transparent border-indigo-500 rounded-full animate-spin"></div>
+      <div className="relative w-24 h-24">
+        <div className="absolute inset-0 border-4 border-indigo-500/30 rounded-full"></div>
+        <div className="absolute inset-0 border-4 border-t-indigo-500 rounded-full animate-spin-slow"></div>
+        <div className="absolute inset-5 border-4 border-purple-500/30 rounded-full"></div>
+        <div className="absolute inset-5 border-4 border-b-purple-500 rounded-full animate-spin-reverse"></div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <SparklesIcon className="w-10 h-10 text-pink-400 animate-pulse" />
+        </div>
+      </div>
       <h2 className="text-2xl font-semibold mt-8 text-gray-200">Generating Your Video</h2>
-      <p className="mt-2 text-gray-400 text-center transition-opacity duration-500">
-        {loadingMessages[messageIndex]}
+      <p className="mt-2 text-gray-400 text-center h-6" key={messageIndex}>
+        <span className="animate-fade-in-out inline-block">
+            {loadingMessages[messageIndex]}
+        </span>
       </p>
     </div>
   );

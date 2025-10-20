@@ -25,14 +25,24 @@ export const generateVideo = async (
       numberOfVideos: 1,
       aspectRatio: params.aspectRatio,
       resolution: params.resolution,
+      durationSecs: params.duration,
     },
   };
 
-  // Conditionally add prompt only if it's not empty.
-  // An empty prompt can cause issues when it's optional.
-  if (params.prompt && params.prompt.trim() !== '') {
-    generateVideoPayload.prompt = params.prompt;
+  // To better enforce the desired video length, construct a prompt that
+  // includes the duration. This helps guide the model, as the `durationSecs`
+  // parameter alone may not be strictly followed.
+  let finalPrompt = '';
+  const promptText = params.prompt ? params.prompt.trim() : '';
+
+  if (promptText) {
+    finalPrompt = `A ${params.duration} second video of: ${promptText}`;
+  } else {
+    // Create a prompt if one doesn't exist to carry the duration instruction.
+    finalPrompt = `A ${params.duration} second video.`;
   }
+
+  generateVideoPayload.prompt = finalPrompt;
 
   if (params.mode === GenerationMode.IMAGE_TO_VIDEO) {
     if (params.startFrame) {
