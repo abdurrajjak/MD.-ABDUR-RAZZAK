@@ -3,20 +3,20 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React from 'react';
-import {ArrowPathIcon, PlusIcon, SparklesIcon} from './icons';
+import {ArrowPathIcon, FilmIcon, PlusIcon} from './icons';
 
 interface VideoResultProps {
   videoUrl: string;
   onRetry: () => void;
   onNewVideo: () => void;
-  // onExtend: () => void;
+  onExtend: () => void;
 }
 
 const VideoResult: React.FC<VideoResultProps> = ({
   videoUrl,
   onRetry,
   onNewVideo,
-  // onExtend,
+  onExtend,
 }) => {
   return (
     <div className="w-full flex flex-col items-center gap-8 p-8 bg-gray-800/50 rounded-lg border border-gray-700 shadow-2xl">
@@ -40,12 +40,12 @@ const VideoResult: React.FC<VideoResultProps> = ({
           <ArrowPathIcon className="w-5 h-5" />
           Retry
         </button>
-        {/* <button
+        <button
           onClick={onExtend}
           className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">
-          <SparklesIcon className="w-5 h-5" />
+          <FilmIcon className="w-5 h-5" />
           Extend
-        </button> */}
+        </button>
         <button
           onClick={onNewVideo}
           className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors">

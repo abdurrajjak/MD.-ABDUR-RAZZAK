@@ -14,8 +14,9 @@ import {
 } from '../types';
 import {
   ArrowRightIcon,
+  BoltIcon,
   ChevronDownIcon,
-  // FilmIcon, // Removed as EXTEND_VIDEO mode is disabled
+  FilmIcon,
   FramesModeIcon,
   ImageModeIcon,
   PlusIcon,
@@ -23,6 +24,7 @@ import {
   ReferencesModeIcon,
   SlidersHorizontalIcon,
   SparklesIcon,
+  StoryModeIcon,
   TextModeIcon,
   TvIcon,
   XMarkIcon,
@@ -40,7 +42,8 @@ const modeIcons: Record<GenerationMode, React.ReactNode> = {
   [GenerationMode.REFERENCES_TO_VIDEO]: (
     <ReferencesModeIcon className="w-5 h-5" />
   ),
-  // [GenerationMode.EXTEND_VIDEO]: <FilmIcon className="w-5 h-5" />,
+  [GenerationMode.IMAGE_STORY]: <StoryModeIcon className="w-5 h-5" />,
+  [GenerationMode.EXTEND_VIDEO]: <FilmIcon className="w-5 h-5" />,
 };
 
 const fileToBase64 = <T extends {file: File; base64: string}>(
@@ -275,6 +278,10 @@ const modeTooltips: Record<GenerationMode, string> = {
     'Generate motion between a start and an end frame.',
   [GenerationMode.REFERENCES_TO_VIDEO]:
     'Create a video using reference images for character or environment consistency.',
+  [GenerationMode.IMAGE_STORY]:
+    'Create a story that unfolds across a sequence of images.',
+  [GenerationMode.EXTEND_VIDEO]:
+    'Add 7 seconds to the end of your previously generated video.',
 };
 
 const PromptForm: React.FC<PromptFormProps> = ({
@@ -309,6 +316,9 @@ const PromptForm: React.FC<PromptFormProps> = ({
   const [inputVideo, setInputVideo] = useState<VideoFile | null>(
     initialValues?.inputVideo ?? null,
   );
+  const [videoObject, setVideoObject] = useState<any | null>(
+    initialValues?.videoObject ?? null,
+  );
   const [isLooping, setIsLooping] = useState(initialValues?.isLooping ?? false);
   const [duration, setDuration] = useState(initialValues?.duration ?? 15);
 
@@ -333,6 +343,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
     setReferenceImages(initialValues?.referenceImages ?? []);
     setStyleImage(initialValues?.styleImage ?? null);
     setInputVideo(initialValues?.inputVideo ?? null);
+    setVideoObject(initialValues?.videoObject ?? null);
     setIsLooping(initialValues?.isLooping ?? false);
     setDuration(initialValues?.duration ?? 15);
   }, [initialValues]);
@@ -345,10 +356,17 @@ const PromptForm: React.FC<PromptFormProps> = ({
   }, [model, duration, maxDuration]);
 
   useEffect(() => {
-    if (generationMode === GenerationMode.REFERENCES_TO_VIDEO) {
+    if (
+      generationMode === GenerationMode.REFERENCES_TO_VIDEO ||
+      generationMode === GenerationMode.IMAGE_STORY
+    ) {
       setModel(VeoModel.VEO);
       setAspectRatio(AspectRatio.LANDSCAPE);
       setResolution(Resolution.P720);
+    } else if (generationMode === GenerationMode.EXTEND_VIDEO) {
+      setModel(VeoModel.VEO);
+      setResolution(Resolution.P720);
+      setDuration(7);
     }
   }, [generationMode]);
 
@@ -387,6 +405,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
         referenceImages,
         styleImage,
         inputVideo,
+        videoObject,
         isLooping,
         duration,
       });
@@ -402,11 +421,43 @@ const PromptForm: React.FC<PromptFormProps> = ({
       referenceImages,
       styleImage,
       inputVideo,
+      videoObject,
       onGenerate,
       isLooping,
       duration,
     ],
   );
+
+  const handleFastGenerate = useCallback(() => {
+    onGenerate({
+      prompt,
+      model: VeoModel.VEO_FAST, // Override
+      aspectRatio,
+      resolution,
+      mode: generationMode,
+      startFrame,
+      endFrame,
+      referenceImages,
+      styleImage,
+      inputVideo,
+      videoObject,
+      isLooping,
+      duration: 15, // Override
+    });
+  }, [
+    prompt,
+    aspectRatio,
+    resolution,
+    generationMode,
+    startFrame,
+    endFrame,
+    referenceImages,
+    styleImage,
+    inputVideo,
+    videoObject,
+    onGenerate,
+    isLooping,
+  ]);
 
   const handleSelectMode = (mode: GenerationMode) => {
     setGenerationMode(mode);
@@ -417,6 +468,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
     setReferenceImages([]);
     setStyleImage(null);
     setInputVideo(null);
+    setVideoObject(null);
     setIsLooping(false);
   };
 
@@ -427,7 +479,8 @@ const PromptForm: React.FC<PromptFormProps> = ({
       'Describe motion between start and end frames...',
     [GenerationMode.REFERENCES_TO_VIDEO]:
       'Describe a video using reference and style images...',
-    // [GenerationMode.EXTEND_VIDEO]: 'Describe what happens next in the video...',
+    [GenerationMode.IMAGE_STORY]: 'Describe the story connecting the images...',
+    [GenerationMode.EXTEND_VIDEO]: 'Describe what happens next in the video...',
   }[generationMode];
 
   const renderMediaUploads = () => {
@@ -562,57 +615,147 @@ const PromptForm: React.FC<PromptFormProps> = ({
         </div>
       );
     }
-    /* if (generationMode === GenerationMode.EXTEND_VIDEO) {
+    if (generationMode === GenerationMode.IMAGE_STORY) {
+      const handleReferenceSelect = (newImages: ImageFile[]) => {
+        setReferenceImages((prevImages) => {
+          const spaceLeft = 3 - prevImages.length;
+          if (spaceLeft <= 0) {
+            return prevImages;
+          }
+          const imagesToAdd = newImages.slice(0, spaceLeft);
+          return [...prevImages, ...imagesToAdd];
+        });
+      };
+
+      return (
+        <div className="mb-3 p-4 bg-[#2c2c2e] rounded-xl border border-gray-700 flex flex-col items-center justify-center gap-4">
+          <div>
+            <h3 className="text-sm font-medium text-gray-300 mb-2 text-center">
+              Image Sequence ({referenceImages.length}/3)
+            </h3>
+            <div className="flex flex-wrap items-center justify-center gap-2 p-2 bg-gray-900/50 rounded-lg min-h-[6.5rem]">
+              {referenceImages.map((img, index) => (
+                <ImageUpload
+                  key={index}
+                  image={img}
+                  label=""
+                  onSelect={() => {
+                    /* no-op */
+                  }}
+                  onRemove={() =>
+                    setReferenceImages((imgs) =>
+                      imgs.filter((_, i) => i !== index),
+                    )
+                  }
+                  tooltip=""
+                />
+              ))}
+              {referenceImages.length < 3 && (
+                <ImageUpload
+                  label="Add Image"
+                  onSelect={handleReferenceSelect}
+                  tooltip="Upload images for the story sequence (up to 3). You can select multiple files at once."
+                  multiple={true}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (generationMode === GenerationMode.EXTEND_VIDEO) {
       return (
         <div className="mb-3 p-4 bg-[#2c2c2e] rounded-xl border border-gray-700 flex items-center justify-center gap-4">
           <VideoUpload
             label="Input Video"
             video={inputVideo}
             onSelect={setInputVideo}
-            onRemove={() => setInputVideo(null)}
+            onRemove={() => {
+              setInputVideo(null);
+              setVideoObject(null);
+            }}
           />
         </div>
       );
-    } */
+    }
     return null;
   };
 
-  const isRefMode = generationMode === GenerationMode.REFERENCES_TO_VIDEO;
+  const isRefMode =
+    generationMode === GenerationMode.REFERENCES_TO_VIDEO ||
+    generationMode === GenerationMode.IMAGE_STORY;
+  const isExtendMode = generationMode === GenerationMode.EXTEND_VIDEO;
 
-  let isSubmitDisabled = false;
-  let tooltipText = '';
+  let isPrimarySubmitDisabled = false;
+  let primaryTooltipText = '';
 
   switch (generationMode) {
     case GenerationMode.TEXT_TO_VIDEO:
-      isSubmitDisabled = !prompt.trim();
-      if (isSubmitDisabled) {
-        tooltipText = 'Please enter a prompt.';
+      isPrimarySubmitDisabled = !prompt.trim();
+      if (isPrimarySubmitDisabled) {
+        primaryTooltipText = 'Please enter a prompt.';
       }
       break;
     case GenerationMode.IMAGE_TO_VIDEO:
-      isSubmitDisabled = !startFrame;
-      if (isSubmitDisabled) {
-        tooltipText = 'A source image is required.';
+      isPrimarySubmitDisabled = !startFrame;
+      if (isPrimarySubmitDisabled) {
+        primaryTooltipText = 'A source image is required.';
       }
       break;
     case GenerationMode.FRAMES_TO_VIDEO:
-      isSubmitDisabled = !startFrame;
-      if (isSubmitDisabled) {
-        tooltipText = 'A start frame is required.';
+      isPrimarySubmitDisabled = !startFrame;
+      if (isPrimarySubmitDisabled) {
+        primaryTooltipText = 'A start frame is required.';
       }
       break;
     case GenerationMode.REFERENCES_TO_VIDEO:
       const hasNoRefs = referenceImages.length === 0;
       const hasNoPrompt = !prompt.trim();
-      isSubmitDisabled = hasNoRefs || hasNoPrompt;
+      isPrimarySubmitDisabled = hasNoRefs || hasNoPrompt;
       if (hasNoRefs && hasNoPrompt) {
-        tooltipText = 'Please add reference image(s) and enter a prompt.';
+        primaryTooltipText = 'Please add reference image(s) and enter a prompt.';
       } else if (hasNoRefs) {
-        tooltipText = 'At least one reference image is required.';
+        primaryTooltipText = 'At least one reference image is required.';
       } else if (hasNoPrompt) {
-        tooltipText = 'Please enter a prompt.';
+        primaryTooltipText = 'Please enter a prompt.';
       }
       break;
+    case GenerationMode.IMAGE_STORY:
+      const hasNoImages = referenceImages.length === 0;
+      const hasNoPromptForStory = !prompt.trim();
+      isPrimarySubmitDisabled = hasNoImages || hasNoPromptForStory;
+      if (hasNoImages && hasNoPromptForStory) {
+        primaryTooltipText = 'Please add image(s) and enter a prompt.';
+      } else if (hasNoImages) {
+        primaryTooltipText = 'At least one image is required for the story.';
+      } else if (hasNoPromptForStory) {
+        primaryTooltipText = 'Please enter a prompt to describe the story.';
+      }
+      break;
+    case GenerationMode.EXTEND_VIDEO:
+      const hasNoVideo = !inputVideo || !videoObject;
+      const hasNoExtendPrompt = !prompt.trim();
+      isPrimarySubmitDisabled = hasNoVideo || hasNoExtendPrompt;
+      if (hasNoVideo) {
+        primaryTooltipText = 'A source video is required to extend.';
+      } else if (hasNoExtendPrompt) {
+        primaryTooltipText = 'Please enter a prompt to describe what happens next.';
+      }
+      break;
+  }
+
+  let isFastGenerateDisabled = false;
+  let fastGenerateTooltipText = '';
+
+  if (isRefMode) {
+    isFastGenerateDisabled = true;
+    fastGenerateTooltipText = 'Quick Generate is not available for Reference or Story modes.';
+  } else if (isExtendMode) {
+    isFastGenerateDisabled = true;
+    fastGenerateTooltipText = 'Quick Generate is not available for Extend Video mode.';
+  } else if (isPrimarySubmitDisabled) {
+    isFastGenerateDisabled = true;
+    fastGenerateTooltipText = primaryTooltipText;
   }
 
   return (
@@ -626,7 +769,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
                 value={model}
                 onChange={(e) => setModel(e.target.value as VeoModel)}
                 icon={<SparklesIcon className="w-5 h-5 text-gray-400" />}
-                disabled={isRefMode}>
+                disabled={isRefMode || isExtendMode}>
                 {Object.values(VeoModel).map((modelValue) => (
                   <option key={modelValue} value={modelValue}>
                     {modelValue}
@@ -648,7 +791,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
                 icon={
                   <RectangleStackIcon className="w-5 h-5 text-gray-400" />
                 }
-                disabled={isRefMode}>
+                disabled={isRefMode || isExtendMode}>
                 {Object.entries(aspectRatioDisplayNames).map(([key, name]) => (
                   <option key={key} value={key}>
                     {name}
@@ -666,7 +809,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
                 value={resolution}
                 onChange={(e) => setResolution(e.target.value as Resolution)}
                 icon={<TvIcon className="w-5 h-5 text-gray-400" />}
-                disabled={isRefMode}>
+                disabled={isRefMode || isExtendMode}>
                 <option value={Resolution.P720}>720p</option>
                 <option value={Resolution.P1080}>1080p</option>
               </CustomSelect>
@@ -677,17 +820,18 @@ const PromptForm: React.FC<PromptFormProps> = ({
             <div className="md:col-span-3 pt-2 relative group">
               <label
                 htmlFor="duration-slider"
-                className="text-xs block mb-1.5 font-medium text-gray-400">
+                className={`text-xs block mb-1.5 font-medium ${isExtendMode ? 'text-gray-500' : 'text-gray-400'}`}>
                 Duration ({duration}s)
               </label>
               <input
                 id="duration-slider"
                 type="range"
                 min="1"
-                max={maxDuration}
+                max={isExtendMode ? 7 : maxDuration}
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value))}
-                className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-thumb"
+                className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-thumb disabled:cursor-not-allowed"
+                disabled={isExtendMode}
               />
               <p className="text-xs text-gray-500 mt-2">
                 Note: The model aims for this duration, but the actual video
@@ -768,14 +912,14 @@ const PromptForm: React.FC<PromptFormProps> = ({
               type="submit"
               className="p-2.5 bg-indigo-600 rounded-full hover:bg-indigo-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
               aria-label="Generate video"
-              disabled={isSubmitDisabled}>
+              disabled={isPrimarySubmitDisabled}>
               <ArrowRightIcon className="w-5 h-5 text-white" />
             </button>
-            {isSubmitDisabled && tooltipText ? (
+            {isPrimarySubmitDisabled && primaryTooltipText ? (
               <div
                 role="tooltip"
                 className="absolute bottom-full right-0 mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-900 border border-gray-700 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                {tooltipText}
+                {primaryTooltipText}
               </div>
             ) : (
               <div role="tooltip" className={tooltipTopRightClasses}>
@@ -783,6 +927,23 @@ const PromptForm: React.FC<PromptFormProps> = ({
               </div>
             )}
           </div>
+        </div>
+        <div className="relative group mt-3">
+          <button
+            type="button"
+            onClick={handleFastGenerate}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-teal-600/20 border border-teal-500 rounded-lg hover:bg-teal-600/40 disabled:bg-gray-700/50 disabled:border-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors text-teal-300 font-medium"
+            disabled={isFastGenerateDisabled}>
+            <BoltIcon className="w-5 h-5" />
+            <span>Quick Generate (VEO_FAST, 15s)</span>
+          </button>
+          {isFastGenerateDisabled && fastGenerateTooltipText && (
+            <div
+              role="tooltip"
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-900 border border-gray-700 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              {fastGenerateTooltipText}
+            </div>
+          )}
         </div>
         <p className="text-xs text-gray-500 text-center mt-2 px-4">
           Video generation is a paid-only feature. You will be charged on your

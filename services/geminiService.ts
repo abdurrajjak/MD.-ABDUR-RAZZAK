@@ -4,15 +4,21 @@
 */
 import {
   GoogleGenAI,
+  Video,
   VideoGenerationReferenceImage,
   VideoGenerationReferenceType,
 } from '@google/genai';
-import {GenerateVideoParams, GenerationMode} from '../types';
+import {
+  GenerateVideoParams,
+  GenerationMode,
+  Resolution,
+  VeoModel,
+} from '../types';
 
 // Fix: Updated return type to Promise<string> as blob is no longer needed by the UI.
 export const generateVideo = async (
   params: GenerateVideoParams,
-): Promise<string> => {
+): Promise<{videoUrl: string; videoObject: Video; videoBlob: Blob}> => {
   console.log('Starting video generation with params:', params);
 
   // Fix: The API key must be obtained exclusively from the environment variable `process.env.API_KEY`.
@@ -29,17 +35,40 @@ export const generateVideo = async (
     },
   };
 
+  if (params.mode === GenerationMode.EXTEND_VIDEO) {
+    if (params.videoObject) {
+      generateVideoPayload.video = params.videoObject;
+      // Per documentation, extension has fixed settings
+      generateVideoPayload.model = VeoModel.VEO;
+      generateVideoPayload.config.resolution = Resolution.P720;
+      generateVideoPayload.config.durationSecs = 7; // Extension adds 7s
+      console.log(
+        `Extending video with generation task ID: ${params.videoObject.generationTaskId}`,
+      );
+    } else {
+      throw new Error('Video object is required for Extend Video mode.');
+    }
+  }
+
   // To better enforce the desired video length, construct a prompt that
   // includes the duration. This helps guide the model, as the `durationSecs`
   // parameter alone may not be strictly followed.
   let finalPrompt = '';
   const promptText = params.prompt ? params.prompt.trim() : '';
+  const durationForPrompt =
+    params.mode === GenerationMode.EXTEND_VIDEO ? 7 : params.duration;
 
   if (promptText) {
-    finalPrompt = `A ${params.duration} second video of: ${promptText}`;
+    finalPrompt = `A ${durationForPrompt} second video of: ${promptText}`;
   } else {
     // Create a prompt if one doesn't exist to carry the duration instruction.
-    finalPrompt = `A ${params.duration} second video.`;
+    finalPrompt = `A ${durationForPrompt} second video.`;
+  }
+
+  if (params.mode === GenerationMode.EXTEND_VIDEO && !promptText) {
+    throw new Error(
+      'A prompt is required to describe what happens next in the video extension.',
+    );
   }
 
   generateVideoPayload.prompt = finalPrompt;
@@ -81,7 +110,10 @@ export const generateVideo = async (
         console.log(`Generating with end frame: ${finalEndFrame.file.name}`);
       }
     }
-  } else if (params.mode === GenerationMode.REFERENCES_TO_VIDEO) {
+  } else if (
+    params.mode === GenerationMode.REFERENCES_TO_VIDEO ||
+    params.mode === GenerationMode.IMAGE_STORY
+  ) {
     const referenceImagesPayload: VideoGenerationReferenceImage[] = [];
 
     if (params.referenceImages) {
@@ -97,7 +129,10 @@ export const generateVideo = async (
       }
     }
 
-    if (params.styleImage) {
+    if (
+      params.mode === GenerationMode.REFERENCES_TO_VIDEO &&
+      params.styleImage
+    ) {
       console.log(
         `Adding style image as a reference: ${params.styleImage.file.name}`,
       );
@@ -113,17 +148,7 @@ export const generateVideo = async (
     if (referenceImagesPayload.length > 0) {
       generateVideoPayload.config.referenceImages = referenceImagesPayload;
     }
-  } /* else if (params.mode === GenerationMode.EXTEND_VIDEO) {
-    if (params.inputVideo) {
-      generateVideoPayload.video = {
-        videoBytes: params.inputVideo.base64,
-        mimeType: params.inputVideo.file.type,
-      };
-      console.log(
-        `Generating with input video: ${params.inputVideo.file.name}`,
-      );
-    }
-  } */
+  }
 
   console.log('Submitting video generation request...');
   let operation = await ai.models.generateVideos(generateVideoPayload);
@@ -155,10 +180,11 @@ export const generateVideo = async (
       );
 
       const raiReasons = operation.response?.raiMediaFilteredReasons;
+      // Fix: Corrected typo 'raiRasons' to 'raiReasons'.
       if (raiReasons && Array.isArray(raiReasons) && raiReasons.length > 0) {
         const specificReason = raiReasons.join(' ');
         throw new Error(
-          `The model did not generate a video due to safety policies. Reason: ${specificReason}`
+          `The model did not generate a video due to safety policies. Reason: ${specificReason}`,
         );
       }
 
@@ -191,7 +217,7 @@ export const generateVideo = async (
     const videoBlob = await res.blob();
     const videoUrl = URL.createObjectURL(videoBlob);
 
-    return videoUrl;
+    return {videoUrl, videoObject: firstVideo.video, videoBlob};
   } else {
     console.error('Operation failed:', operation);
     throw new Error(

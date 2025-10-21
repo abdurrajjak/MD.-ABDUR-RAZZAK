@@ -97,6 +97,16 @@ export const ReferencesModeIcon: React.FC<React.SVGProps<SVGSVGElement>> = (prop
     </svg>
 );
 
+export const StoryModeIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.125 7.5h15.75" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.125 16.5h15.75" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.125 12h15.75" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 3.75h12a1.875 1.875 0 0 1 1.875 1.875v12.75A1.875 1.875 0 0 1 18 20.25H6A1.875 1.875 0 0 1 4.125 18.375V5.625A1.875 1.875 0 0 1 6 3.75z" />
+  </svg>
+);
+
 export const TvIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 20.25h12m-7.5-3.75v3.75m-3.75-3.75h1.5m9 0h1.5m-8.25-8.25h.01M9 12h.01M15 12h.01M3.75 6.75h16.5c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125H3.75A1.125 1.125 0 0 1 2.625 18V7.875c0-.621.504-1.125 1.125-1.125Z" />
@@ -127,5 +137,11 @@ export const CurvedArrowDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (pro
 export const ExclamationTriangleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+  </svg>
+);
+
+export const BoltIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
   </svg>
 );

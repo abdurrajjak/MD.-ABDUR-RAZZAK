@@ -29,7 +29,8 @@ export enum GenerationMode {
   IMAGE_TO_VIDEO = 'Image to Video',
   FRAMES_TO_VIDEO = 'Frames to Video',
   REFERENCES_TO_VIDEO = 'References to Video',
-  // EXTEND_VIDEO = 'Extend Video',
+  IMAGE_STORY = 'Image Story',
+  EXTEND_VIDEO = 'Extend Video',
 }
 
 export interface ImageFile {
@@ -55,4 +56,5 @@ export interface GenerateVideoParams {
   inputVideo?: VideoFile | null;
   isLooping?: boolean;
   duration?: number;
+  videoObject?: any | null;
 }

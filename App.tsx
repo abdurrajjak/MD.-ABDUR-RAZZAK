@@ -12,6 +12,10 @@ import {generateVideo} from './services/geminiService';
 import {
   AppState,
   GenerateVideoParams,
+  GenerationMode,
+  Resolution,
+  VeoModel,
+  VideoFile,
 } from './types';
 
 const Marquee: React.FC = () => {
@@ -20,6 +24,7 @@ const Marquee: React.FC = () => {
     "Image to Video",
     "Frames to Video",
     "References to Video",
+    "Image Story",
   ];
 
   const MarqueeContent = () => (
@@ -54,6 +59,9 @@ const App: React.FC = () => {
   const [lastConfig, setLastConfig] = useState<GenerateVideoParams | null>(
     null,
   );
+  const [lastVideoObject, setLastVideoObject] = useState<any | null>(null);
+  const [lastVideoBlob, setLastVideoBlob] = useState<Blob | null>(null);
+
   // A single state to hold the initial values for the prompt form
   const [initialFormValues, setInitialFormValues] =
     useState<GenerateVideoParams | null>(null);
@@ -69,9 +77,11 @@ const App: React.FC = () => {
     setInitialFormValues(null);
 
     try {
-      // Fix: `generateVideo` now returns a single URL string.
-      const url = await generateVideo(params);
+      const {videoUrl: url, videoObject, videoBlob} =
+        await generateVideo(params);
       setVideoUrl(url);
+      setLastVideoObject(videoObject);
+      setLastVideoBlob(videoBlob);
       setAppState(AppState.SUCCESS);
     } catch (error) {
       console.error('Video generation failed:', error);
@@ -107,35 +117,53 @@ const App: React.FC = () => {
         setAppState(AppState.ERROR);
         return; // Exit after handling specific error
       }
-
+      
       if (errorMsgString.includes('The model did not generate a video')) {
         const reasonPrefix = 'Reason: ';
         const reasonIndex = errorMsgString.indexOf(reasonPrefix);
-        setClearImagesOnTryAgain(true); // Always clear images for safety-related failures.
-
-        if (reasonIndex !== -1) {
-          const reason = errorMsgString.substring(
-            reasonIndex + reasonPrefix.length,
-          );
-          setErrorDetails({
-            title: 'Content Policy Block',
-            message: reason,
-            type: 'warning',
-          });
-        } else {
-          setErrorDetails({
-            title: 'Video Not Generated',
-            message: (
-              <>
-                <p className="mb-4">{errorMsgString}</p>
-                <p className="text-gray-400 text-sm mt-4">
-                  Please try modifying your prompt or images.
+        setClearImagesOnTryAgain(true);
+    
+        const baseMessage = (
+            <>
+                <p className="mb-2">
+                    দুঃখিত, আপনার ভিডিওটি তৈরি করা যায়নি। মনে হচ্ছে আপনার দেওয়া এক বা একাধিক ছবি আমাদের নিরাপত্তা নীতি লঙ্ঘন করেছে।
                 </p>
-              </>
-            ),
-            type: 'error',
-          });
+                <p>
+                    অনুগ্রহ করে ছবিগুলো পরিবর্তন করে আবার চেষ্টা করুন।
+                </p>
+            </>
+        );
+    
+        let detailedMessage: React.ReactNode;
+        if (reasonIndex !== -1) {
+            const reason = errorMsgString.substring(
+                reasonIndex + reasonPrefix.length,
+            );
+            detailedMessage = (
+                <>
+                    {baseMessage}
+                    <div className="mt-4 text-sm text-yellow-400/80 bg-yellow-900/40 p-3 rounded-md text-left">
+                        <strong>Reason:</strong> {reason}
+                    </div>
+                </>
+            );
+        } else {
+            detailedMessage = (
+                <>
+                    {baseMessage}
+                    <p className="text-gray-400 text-sm mt-4 text-left">
+                        <strong>Details:</strong> {errorMsgString}
+                    </p>
+                </>
+            );
         }
+    
+        setErrorDetails({
+            title: 'ছবি সংক্রান্ত নীতি সমস্যা', // "Image Policy Issue"
+            message: detailedMessage,
+            type: 'warning',
+        });
+    
         setAppState(AppState.ERROR);
         return;
       }
@@ -201,20 +229,32 @@ const App: React.FC = () => {
     }
   }, [lastConfig, handleNewVideo, clearImagesOnTryAgain]);
 
-  /* const handleExtend = useCallback(async () => {
-    if (lastConfig && lastVideoBlob) {
+  const handleExtend = useCallback(async () => {
+    if (lastConfig && lastVideoBlob && lastVideoObject) {
       try {
-        const base64 = await blobToBase64(lastVideoBlob);
+        // Create a VideoFile for the UI preview
         const file = new File([lastVideoBlob], 'last_video.mp4', {
           type: lastVideoBlob.type,
         });
-        const videoFile: VideoFile = {file, base64};
+        // We don't need a real base64 for the UI preview, just the file.
+        // The API call will use the `videoObject`.
+        const videoFile: VideoFile = {file, base64: ''};
 
-        setInitialInputVideo(videoFile);
-        setInitialMode(GenerationMode.EXTEND_VIDEO);
-        setInitialPrompt(
-          `Continuing the story from: "${lastConfig.prompt}"\n\n`,
-        );
+        // Set initial values for the form in extend mode
+        setInitialFormValues({
+          ...lastConfig,
+          mode: GenerationMode.EXTEND_VIDEO,
+          prompt: `Continuing the story from: "${lastConfig.prompt}"\n\n`,
+          // Pass the videoObject for the API call
+          videoObject: lastVideoObject,
+          // Pass the inputVideo for the UI preview
+          inputVideo: videoFile,
+          // Lock settings for extension
+          model: VeoModel.VEO,
+          resolution: Resolution.P720,
+          duration: 7, // Extension is always 7s
+          // Aspect ratio is preserved from lastConfig
+        });
 
         setAppState(AppState.IDLE);
         setVideoUrl(null);
@@ -223,11 +263,14 @@ const App: React.FC = () => {
         console.error('Failed to process video for extension:', error);
         const message =
           error instanceof Error ? error.message : 'An unknown error occurred.';
-        setErrorDetails({title: 'Error', message: `Failed to prepare video for extension: ${message}`});
+        setErrorDetails({
+          title: 'Error',
+          message: `Failed to prepare video for extension: ${message}`,
+        });
         setAppState(AppState.ERROR);
       }
     }
-  }, [lastConfig, lastVideoBlob]); */
+  }, [lastConfig, lastVideoBlob, lastVideoObject]);
 
   const renderError = (details: {
     title: string;
@@ -262,8 +305,8 @@ const App: React.FC = () => {
               {details.title}
             </h2>
             <div
-              className={`mt-2 text-center p-4 ${theme.reasonBox} rounded-lg w-full`}>
-              <p className={theme.messageColor}>{details.message}</p>
+              className={`mt-2 text-center p-4 rounded-lg w-full ${theme.messageColor}`}>
+              {details.message}
             </div>
           </div>
         ) : (
@@ -326,7 +369,7 @@ const App: React.FC = () => {
                   videoUrl={videoUrl}
                   onRetry={handleRetry}
                   onNewVideo={handleNewVideo}
-                  // onExtend={handleExtend}
+                  onExtend={handleExtend}
                 />
               )}
               {appState === AppState.SUCCESS &&
